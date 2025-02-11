@@ -45,8 +45,5 @@
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.15"
   },
-  {
-    "homepage": "https://voliotinc.github.io/webpage"
-  }
-
+  "homepage": "https://voliotinc.github.io/webpage"
 }
