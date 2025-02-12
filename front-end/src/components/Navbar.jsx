@@ -75,6 +75,9 @@ const Navbar = () => {
           )}
         </div>
       )}
+
+      {/* Bottom Glow Effect */}
+      <div className="absolute bottom-0 left-0 w-full h-1 bg-blue-500 shadow-lg opacity-50"></div>
     </nav>
   );
 };
