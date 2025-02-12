@@ -10,7 +10,7 @@ import Contact from "./components/ContactUs";
 import Team from "./components/Team";
 import Privacy from "./components/PrivacyPolicy";
 import NotFound from "./components/NotFound";
-import bgPic from "./assets/gptIoT.jpg";
+import bgPic from "./assets/gptIoT3.jpg";
 
 const App = () => {
   return (
