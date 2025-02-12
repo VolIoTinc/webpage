@@ -1,64 +1,145 @@
-import monayImage from "../assets/monay.png";
+import SimpleSlider from "./Slides";
+import serviceImage1 from "../assets/slug.png";
+import serviceImage2 from "../assets/slug.png";
+import serviceImage3 from "../assets/slug.png";
+import securityImage from "../assets/slug.png";
+import IoTimg1 from "../assets/duck.png";
 
 const Hero = () => (
-  <section className="text-center py-20">
-    <h1 className="bg-gradient-to-b from-gray-900 to-gray-800 text-white sm:text-lg md:text-xl lg:text-2xl font-bold">
-      Transforming Industries with IoT Solutions
-    </h1>
-    <h2 className="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 flex justify-evenly items-center mb-96">
-      <p className="text-gray-400 text-sm my-8 sm:px-5 md:px-8 lg:px-11">
-        The Internet of Things (IoT) connects devices, machines, and systems to
-        collect and share data seamlessly. This real-time data empowers
-        industries to optimize processes, improve decision-making, and drive
-        operational efficiency.
-        <br />
-        <br />
-        At VolIoT, we specialize in creating tailored IoT solutions for
-        businesses of all sizes. Whether you're looking to improve asset
-        management, streamline manufacturing, or enhance customer experiences,
-        we build systems that scale with your needs and bring innovative
-        insights from even the most remote locations to your fingertips.
-      </p>
-    </h2>
-    <h3 className="bg-gray-800 flex justify-evenly items-center mb-96">
-      <p className="text-gray-400 text-sm my-6">
-        Our Expertise:
-        <br />
-        IoT Networks and Device Integration
-        <br />
-        Custom PCB Design and Enclosures
-        <br />
-        Cloud Hosted Management and Data Analytics
-        <br />
-        Tailored User Interfaces and APIs
-        <br />
-        Scalable Solutions for Every Industry
-      </p>
-      <button className="bg-blue-900 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition duration-300 border-double border-4 border-indigo-600">
-        Get Started
-      </button>
-    </h3>
-    <h4 className="bg-gradient-to-r from-gray-600 via-gray-900 to-gray-600 flex justify-evenly items-center mb-96 py-3">
-      <img
-        src={monayImage}
-        alt="EXAMPLE"
-        className="rounded-lg shadow-lg sm:max-w-4xs md:max-w-2xs lg:max-w-xs"
-      />
-      <p className="text-gray-400 text-sm text-left pl-2">
-        Vol - <br />
-        _volition_ <br />
-        &nbsp;&nbsp;intentionality and control <br />
-        _volume_
-        <br />
-        &nbsp;&nbsp;signifying scalability and capacity <br />
-        _voltage_ <br />
-        &nbsp;&nbsp;energy and power <br />
-        IoT - <br />
-        _internet of things_ <br />
-        &nbsp;&nbsp;enabling smarter, more connected systems
-      </p>
-    </h4>
-  </section>
+  <div className="overflow-hidden">
+    {/* Banner Section with Background Image */}
+    <section className=" text-white text-shadow-thin-black py-24 min-h-screen">
+      <div className="text-center">
+        <h1 className="text-4xl sm:text-5xl font-bold mb-4">
+          Transforming Industries with IoT Solutions
+        </h1>
+      </div>
+      <div className="container mx-auto px-4">
+        <SimpleSlider />
+      </div>
+    </section>
+
+    {/* Services Section */}
+    <section className="py-16 bg-transparent">
+      <div className="container mx-auto px-4 text-center">
+        <h2 className="text-3xl font-semibold text-shadow-thin-black mb-8">
+          Our Services
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+          <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
+            <img
+              src={serviceImage1}
+              alt="Service 1"
+              className="w-full h-48 object-cover rounded-lg mb-4"
+            />
+            <h3 className="text-xl text-white text-shadow-thin-black font-semibold mb-2">
+              Service 1
+            </h3>
+            <p className="text-gray-100 text-shadow-thin-black">
+              Brief description of Service 1.
+            </p>
+          </div>
+          <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
+            <img
+              src={serviceImage2}
+              alt="Service 2"
+              className="w-full h-48 object-cover rounded-lg mb-4"
+            />
+            <h3 className="text-xl text-white text-shadow-thin-black font-semibold mb-2">
+              Service 2
+            </h3>
+            <p className="text-gray-100 text-shadow-thin-black">
+              Brief description of Service 2.
+            </p>
+          </div>
+          <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
+            <img
+              src={serviceImage3}
+              alt="Service 3"
+              className="w-full h-48 object-cover rounded-lg mb-4"
+            />
+            <h3 className="text-xl text-white text-shadow-thin-black font-semibold mb-2">
+              Service 3
+            </h3>
+            <p className="text-gray-100 text-shadow-thin-black">
+              Brief description of Service 3.
+            </p>
+          </div>
+        </div>
+        <div className="mt-8">
+          <button className="bg-blue-900 text-white px-6 py-2 rounded-lg hover:bg-blue-500 transition">
+            See Full List
+          </button>
+        </div>
+      </div>
+    </section>
+
+    {/* IoT and Industry Overview */}
+    <section className="py-24 bg-gradient-to-r from-gray-800 to-transparent text-white text-shadow-thin-black">
+      <div className="container mx-auto px-4 flex flex-col md:flex-row items-center">
+        <div className="md:w-1/2">
+          <h2 className="text-3xl font-semibold mb-6">
+            What is IoT and How It Helps Industry?
+          </h2>
+          <p className="text-lg text-gray-100 mb-8">
+            The Internet of Things (IoT) is revolutionizing industries by
+            connecting devices, systems, and data to drive efficiency,
+            productivity, and decision-making.
+          </p>
+        </div>
+        <div className="md:w-1/2 flex flex-wrap justify-around gap-4">
+          <img
+            src={IoTimg1}
+            alt="IoT 1"
+            className="w-24 h-24 object-cover rounded-lg shadow-lg"
+          />
+          <img
+            src={IoTimg1}
+            alt="IoT 2"
+            className="w-24 h-24 object-cover rounded-lg shadow-lg"
+          />
+          <img
+            src={IoTimg1}
+            alt="IoT 3"
+            className="w-24 h-24 object-cover rounded-lg shadow-lg"
+          />
+          <img
+            src={IoTimg1}
+            alt="IoT 4"
+            className="w-24 h-24 object-cover rounded-lg shadow-lg"
+          />
+          <img
+            src={IoTimg1}
+            alt="IoT 5"
+            className="w-24 h-24 object-cover rounded-lg shadow-lg"
+          />
+        </div>
+      </div>
+    </section>
+
+    {/* SOC Type 2 & ISO/IEC 27001 Dedication */}
+    <section className="py-24 bg-gradient-to-r from-gray-800 to-transparent">
+      <div className="container mx-auto px-4 flex flex-col md:flex-row items-center">
+        <div className="md:w-1/2">
+          <h2 className="text-3xl font-semibold text-shadow-thin-black mb-6">
+            Our Commitment to SOC Type 2 & ISO/IEC 27001
+          </h2>
+          <p className="text-lg text-gray-100 text-shadow-thin-black mb-8">
+            We are dedicated to the highest standards of security and
+            compliance, ensuring that our IoT solutions meet SOC Type 2 and
+            ISO/IEC 27001 certifications for your peace of mind.
+          </p>
+        </div>
+        <div className="md:w-1/2">
+          <img
+            src={securityImage}
+            alt="Security Dedication"
+            className="w-full h-auto object-cover rounded-lg shadow-lg"
+          />
+        </div>
+      </div>
+    </section>
+  </div>
 );
 
 export default Hero;

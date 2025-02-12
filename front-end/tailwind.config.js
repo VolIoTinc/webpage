@@ -21,7 +21,10 @@ module.exports = {
         "3xs": "12rem",
         "4xs": "8rem",
       },
+      textShadow: {
+        "thin-black": "3px 3px 5px black",
+      },
     },
   },
-  plugins: [],
+  plugins: [require("tailwindcss-textshadow")],
 };
