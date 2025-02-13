@@ -6,7 +6,7 @@ const Home = () => {
   return (
     <div className="relative py-0">
       {/* Background Container */}
-      <div className="relative w-full bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white text-center py-12">
+      <div className="relative w-full bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white text-center py-9">
         {/* Animated Heading */}
         <motion.h1
           className="text-3xl md:text-5xl lg:text-6xl font-extrabold tracking-wide"
