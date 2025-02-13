@@ -24,7 +24,7 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d build"
+    "deploy": "gh-pages -d build -b andy-redesign"
   },
   "eslintConfig": {
     "extends": [
@@ -51,5 +51,5 @@
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.15"
   },
-  "homepage": "https://www.voliotinc.com"
+  "homepage": "https://voliotinc.github.io/webpage"
 }
