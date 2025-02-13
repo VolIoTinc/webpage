@@ -1,0 +1,26 @@
+{
+  "files": {
+    "main.css": "/webpage/static/css/main.104f9d82.css",
+    "main.js": "/webpage/static/js/main.4bb62561.js",
+    "static/js/453.f7be5b23.chunk.js": "/webpage/static/js/453.f7be5b23.chunk.js",
+    "static/media/gptIoT3.jpg": "/webpage/static/media/gptIoT3.8012d220614068ad4e8d.jpg",
+    "static/media/Vimg.png": "/webpage/static/media/Vimg.ec4bc91c7ba4e836f30d.png",
+    "static/media/chuck.jpeg": "/webpage/static/media/chuck.c5af09fc5b5edfd7112d.jpeg",
+    "static/media/isoiec.png": "/webpage/static/media/isoiec.5ef05869c8429b1a8b23.png",
+    "static/media/duck.png": "/webpage/static/media/duck.aecfbd0e5cf1a0e4f78f.png",
+    "static/media/marcus.jpeg": "/webpage/static/media/marcus.f9ea4153f68cf184fd26.jpeg",
+    "static/media/slug.png": "/webpage/static/media/slug.479333dc91598e84bcf7.png",
+    "static/media/slick.svg": "/webpage/static/media/slick.2630a3e3eab21c607e21.svg",
+    "static/media/slick.eot": "/webpage/static/media/slick.a4e97f5a2a64f0ab1323.eot",
+    "static/media/slick.ttf": "/webpage/static/media/slick.c94f7671dcc99dce43e2.ttf",
+    "static/media/slick.woff": "/webpage/static/media/slick.295183786cd8a1389865.woff",
+    "index.html": "/webpage/index.html",
+    "main.104f9d82.css.map": "/webpage/static/css/main.104f9d82.css.map",
+    "main.4bb62561.js.map": "/webpage/static/js/main.4bb62561.js.map",
+    "453.f7be5b23.chunk.js.map": "/webpage/static/js/453.f7be5b23.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.104f9d82.css",
+    "static/js/main.4bb62561.js"
+  ]
+}
