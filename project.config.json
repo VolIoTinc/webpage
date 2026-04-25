@@ -1,0 +1,12 @@
+{
+  "projectName": "voliot-homepage",
+  "displayName": "VolIoT Inc",
+  "tagline": "Build real things. Own what you build",
+  "description": "We build systems that work for people, not against them. From embedded sensors to cloud dashboards, VolIoT takes unconcentional ideas and turns them into real, working infrastructure - owned by you, built to last.",
+  "rootDomain": "voliotinc.com",
+  "contactEmail": "andy@voliotinc.com",
+  "fromEmail": "noreply@voliotinc.com",
+  "smsNumber": "+14233054044",
+  "location": "Chattanooga Tennessee",
+  "awsRegion": "us-east-1"
+}

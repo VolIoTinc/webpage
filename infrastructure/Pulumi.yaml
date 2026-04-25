@@ -1,0 +1,6 @@
+# The `name` field must match `projectName` in /project.config.json.
+# Pulumi reads this file before the program runs, so the value can't be loaded
+# dynamically — it's the one Pulumi-side duplicate of projectName.
+name: voliotinc-homepage
+runtime: nodejs
+description: Infrastructure bootstrap — see /project.config.json

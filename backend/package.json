@@ -1,0 +1,16 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "Storefront Lambda functions",
+  "type": "commonjs",
+  "scripts": {
+    "zip": "zip -r functions.zip functions/ node_modules/ package.json"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.400.0",
+    "@aws-sdk/lib-dynamodb": "^3.400.0",
+    "@aws-sdk/client-secrets-manager": "^3.400.0",
+    "@aws-sdk/client-ses": "^3.400.0",
+    "@aws-sdk/client-sns": "^3.400.0"
+  }
+}

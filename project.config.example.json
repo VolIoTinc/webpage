@@ -1,0 +1,12 @@
+{
+  "projectName": "YOUR_PROJECT_NAME",
+  "displayName": "Your Project Display Name",
+  "tagline": "Short tagline shown on the public site.",
+  "description": "One-sentence description used in page metadata.",
+  "rootDomain": "YOUR_DOMAIN.com",
+  "contactEmail": "you@example.com",
+  "fromEmail": "noreply@YOUR_DOMAIN.com",
+  "smsNumber": "",
+  "location": "City, State",
+  "awsRegion": "us-east-2"
+}

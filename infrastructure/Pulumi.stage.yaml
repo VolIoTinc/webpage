@@ -1,0 +1,9 @@
+# Stage stack config — env-specific knobs only.
+# Project identity (merchant name, domain, emails) lives in /project.config.json.
+config:
+  aws:region: us-east-1
+  bootstrap:environment: stage
+  bootstrap:cloudfrontPriceClass: PriceClass_100
+  bootstrap:corsAllowedOrigins:
+    - http://localhost:3000
+    - http://localhost:3001
