@@ -1,0 +1,337 @@
+# Deploys infrastructure + public site + admin to the stage environment.
+# Triggered on push to `stage`.
+#
+# Required GitHub Secrets:
+#   AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
+#   PULUMI_ACCESS_TOKEN
+#
+# All other values (merchant name, domain, S3 bucket names, API URL, CF dist ID,
+# Cognito IDs) are derived from /project.config.json and Pulumi stack outputs.
+
+name: Deploy to Stage
+
+on:
+  push:
+    branches:
+      - stage
+    paths:
+      - "webpage/**"
+      - "backend/**"
+      - "admin-webpage/**"
+      - "admin-backend/**"
+      - "infrastructure/**"
+      - "project.config.json"
+      - ".github/workflows/deploy-stage.yml"
+  workflow_dispatch:
+    inputs:
+      deploy_all:
+        description: "Force deploy all components (ignore path filters)"
+        type: boolean
+        default: true
+
+env:
+  NODE_VERSION: "22"
+  ENV: stage
+  PULUMI_STACK: stage
+
+jobs:
+  config:
+    name: Read project config
+    runs-on: ubuntu-latest
+    outputs:
+      merchantName: ${{ steps.read.outputs.merchantName }}
+      rootDomain: ${{ steps.read.outputs.rootDomain }}
+      awsRegion: ${{ steps.read.outputs.awsRegion }}
+      siteUrl: ${{ steps.read.outputs.siteUrl }}
+      adminUrl: ${{ steps.read.outputs.adminUrl }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: read
+        run: |
+          MERCHANT=$(jq -r .projectName project.config.json)
+          ROOT=$(jq -r .rootDomain project.config.json)
+          REGION=$(jq -r '.awsRegion // "us-east-2"' project.config.json)
+          echo "merchantName=$MERCHANT" >> $GITHUB_OUTPUT
+          echo "rootDomain=$ROOT" >> $GITHUB_OUTPUT
+          echo "awsRegion=$REGION" >> $GITHUB_OUTPUT
+          echo "siteUrl=https://stage.$ROOT" >> $GITHUB_OUTPUT
+          echo "adminUrl=https://admin.stage.$ROOT" >> $GITHUB_OUTPUT
+
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      frontend: ${{ github.event.inputs.deploy_all == 'true' && 'true' || steps.filter.outputs.frontend }}
+      backend: ${{ github.event.inputs.deploy_all == 'true' && 'true' || steps.filter.outputs.backend }}
+      admin_frontend: ${{ github.event.inputs.deploy_all == 'true' && 'true' || steps.filter.outputs.admin_frontend }}
+      admin_backend: ${{ github.event.inputs.deploy_all == 'true' && 'true' || steps.filter.outputs.admin_backend }}
+      infrastructure: ${{ github.event.inputs.deploy_all == 'true' && 'true' || steps.filter.outputs.infrastructure }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        if: github.event_name == 'push'
+        with:
+          filters: |
+            frontend:
+              - 'webpage/**'
+              - 'project.config.json'
+            backend:
+              - 'backend/**'
+              - 'project.config.json'
+            admin_frontend:
+              - 'admin-webpage/**'
+              - 'project.config.json'
+            admin_backend:
+              - 'admin-backend/**'
+              - 'project.config.json'
+            infrastructure:
+              - 'infrastructure/**'
+              - 'project.config.json'
+
+  deploy-infrastructure:
+    name: Deploy Infrastructure
+    runs-on: ubuntu-latest
+    needs: [config, changes]
+    if: needs.changes.outputs.infrastructure == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - uses: pulumi/actions@v5
+      - name: Install dependencies
+        working-directory: ./infrastructure
+        run: npm ci
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ needs.config.outputs.awsRegion }}
+      - name: Pulumi Up
+        working-directory: ./infrastructure
+        run: pulumi up --stack ${{ env.PULUMI_STACK }} --yes
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+
+  stack-outputs:
+    name: Read Pulumi outputs
+    runs-on: ubuntu-latest
+    needs: [config, deploy-infrastructure]
+    if: always() && needs.deploy-infrastructure.result != 'failure'
+    outputs:
+      apiGatewayUrl: ${{ steps.outputs.outputs.apiGatewayUrl }}
+      adminApiGatewayUrl: ${{ steps.outputs.outputs.adminApiGatewayUrl }}
+      cloudfrontDistributionId: ${{ steps.outputs.outputs.cloudfrontDistributionId }}
+      adminCloudfrontDistributionId: ${{ steps.outputs.outputs.adminCloudfrontDistributionId }}
+      cognitoUserPoolId: ${{ steps.outputs.outputs.cognitoUserPoolId }}
+      cognitoClientId: ${{ steps.outputs.outputs.cognitoClientId }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - uses: pulumi/actions@v5
+      - name: Install dependencies
+        working-directory: ./infrastructure
+        run: npm ci
+      - id: outputs
+        working-directory: ./infrastructure
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+        run: |
+          for key in apiGatewayUrl adminApiGatewayUrl cloudfrontDistributionId adminCloudfrontDistributionId cognitoUserPoolId cognitoClientId; do
+            val=$(pulumi stack output --stack ${{ env.PULUMI_STACK }} "$key")
+            echo "$key=$val" >> $GITHUB_OUTPUT
+          done
+
+  deploy-backend:
+    name: Deploy Storefront Backend
+    runs-on: ubuntu-latest
+    needs: [config, changes, stack-outputs]
+    if: always() && needs.changes.outputs.backend == 'true' && needs.stack-outputs.result == 'success'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: backend/package-lock.json
+      - name: Install dependencies
+        working-directory: ./backend
+        run: npm ci --production
+      - name: Package
+        working-directory: ./backend
+        run: zip -rq functions.zip functions/ node_modules/ package.json
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ needs.config.outputs.awsRegion }}
+      - name: Deploy Lambda functions
+        working-directory: ./backend
+        env:
+          MERCHANT_NAME: ${{ needs.config.outputs.merchantName }}
+          AWS_REGION: ${{ needs.config.outputs.awsRegion }}
+        run: |
+          FUNCTIONS=(getProducts subscribe handleContact)
+          for func in "${FUNCTIONS[@]}"; do
+            PREFIX="${MERCHANT_NAME}-${func}-${{ env.ENV }}"
+            FUNC_NAME=$(aws lambda list-functions --region "$AWS_REGION" --no-paginate \
+              --query "Functions[?starts_with(FunctionName, \`${PREFIX}\`)].FunctionName" \
+              --output text --no-cli-pager | tr '\t' '\n' | grep -v '^None$' | grep -v '^$' | head -n1)
+            if [ -z "$FUNC_NAME" ]; then echo "WARNING: no Lambda matching $PREFIX"; continue; fi
+            echo "Updating $FUNC_NAME..."
+            aws lambda update-function-code --function-name "$FUNC_NAME" \
+              --zip-file fileb://functions.zip --region "$AWS_REGION" --no-cli-pager
+          done
+
+  deploy-frontend:
+    name: Deploy Storefront Frontend
+    runs-on: ubuntu-latest
+    needs: [config, changes, stack-outputs]
+    if: always() && needs.changes.outputs.frontend == 'true' && needs.stack-outputs.result == 'success'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: webpage/package-lock.json
+      - name: Install dependencies
+        working-directory: ./webpage
+        run: npm ci
+      - name: Build
+        working-directory: ./webpage
+        env:
+          ENV: ${{ env.ENV }}
+          NEXT_PUBLIC_API_URL: ${{ needs.stack-outputs.outputs.apiGatewayUrl }}
+          NEXT_PUBLIC_SITE_URL: ${{ needs.config.outputs.siteUrl }}
+        run: npm run build
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ needs.config.outputs.awsRegion }}
+      - name: Sync to S3
+        env:
+          BUCKET: stage-${{ needs.config.outputs.merchantName }}
+        run: |
+          aws s3 sync webpage/out s3://${BUCKET}/ --delete \
+            --exclude "*" --include "*.html" \
+            --cache-control "no-cache, no-store, must-revalidate"
+          aws s3 sync webpage/out s3://${BUCKET}/ \
+            --exclude "*.html" \
+            --cache-control "public, max-age=31536000, immutable"
+      - name: Invalidate CloudFront
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ needs.stack-outputs.outputs.cloudfrontDistributionId }} \
+            --paths "/*"
+
+  deploy-admin-backend:
+    name: Deploy Admin Backend
+    runs-on: ubuntu-latest
+    needs: [config, changes, stack-outputs]
+    if: always() && needs.changes.outputs.admin_backend == 'true' && needs.stack-outputs.result == 'success'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: admin-backend/package-lock.json
+      - name: Install dependencies
+        working-directory: ./admin-backend
+        run: npm ci --production
+      - name: Package
+        working-directory: ./admin-backend
+        run: zip -rq functions.zip functions/ node_modules/ package.json
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ needs.config.outputs.awsRegion }}
+      - name: Deploy Admin Lambda functions
+        working-directory: ./admin-backend
+        env:
+          MERCHANT_NAME: ${{ needs.config.outputs.merchantName }}
+          AWS_REGION: ${{ needs.config.outputs.awsRegion }}
+        run: |
+          FUNCTIONS=(getOrders updateOrder getProducts updateProduct createInvoice getDashboard)
+          for func in "${FUNCTIONS[@]}"; do
+            PREFIX="${MERCHANT_NAME}-admin-${func}-${{ env.ENV }}"
+            FUNC_NAME=$(aws lambda list-functions --region "$AWS_REGION" --no-paginate \
+              --query "Functions[?starts_with(FunctionName, \`${PREFIX}\`)].FunctionName" \
+              --output text --no-cli-pager | tr '\t' '\n' | grep -v '^None$' | grep -v '^$' | head -n1)
+            if [ -z "$FUNC_NAME" ]; then echo "WARNING: no Lambda matching $PREFIX"; continue; fi
+            echo "Updating $FUNC_NAME..."
+            aws lambda update-function-code --function-name "$FUNC_NAME" \
+              --zip-file fileb://functions.zip --region "$AWS_REGION" --no-cli-pager
+          done
+
+  deploy-admin-frontend:
+    name: Deploy Admin Frontend
+    runs-on: ubuntu-latest
+    needs: [config, changes, stack-outputs]
+    if: always() && needs.changes.outputs.admin_frontend == 'true' && needs.stack-outputs.result == 'success'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: admin-webpage/package-lock.json
+      - name: Install dependencies
+        working-directory: ./admin-webpage
+        run: npm ci
+      - name: Build
+        working-directory: ./admin-webpage
+        env:
+          NEXT_PUBLIC_ADMIN_API_URL: ${{ needs.stack-outputs.outputs.adminApiGatewayUrl }}
+          NEXT_PUBLIC_COGNITO_USER_POOL_ID: ${{ needs.stack-outputs.outputs.cognitoUserPoolId }}
+          NEXT_PUBLIC_COGNITO_CLIENT_ID: ${{ needs.stack-outputs.outputs.cognitoClientId }}
+          NEXT_PUBLIC_SITE_URL: ${{ needs.config.outputs.adminUrl }}
+        run: npm run build
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ needs.config.outputs.awsRegion }}
+      - name: Sync to S3
+        env:
+          BUCKET: admin-stage-${{ needs.config.outputs.merchantName }}
+        run: |
+          aws s3 sync admin-webpage/out s3://${BUCKET}/ --delete \
+            --exclude "*" --include "*.html" \
+            --cache-control "no-cache, no-store, must-revalidate"
+          aws s3 sync admin-webpage/out s3://${BUCKET}/ \
+            --exclude "*.html" \
+            --cache-control "public, max-age=31536000, immutable"
+      - name: Invalidate CloudFront
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ needs.stack-outputs.outputs.adminCloudfrontDistributionId }} \
+            --paths "/*"
+
+  summary:
+    name: Deployment Summary
+    runs-on: ubuntu-latest
+    needs:
+      [config, deploy-infrastructure, deploy-backend, deploy-frontend,
+       deploy-admin-backend, deploy-admin-frontend]
+    if: always()
+    steps:
+      - name: Summary
+        run: |
+          echo "## Stage Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Component | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Infrastructure | ${{ needs.deploy-infrastructure.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Storefront Backend | ${{ needs.deploy-backend.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Storefront Frontend | ${{ needs.deploy-frontend.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Admin Backend | ${{ needs.deploy-admin-backend.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Admin Frontend | ${{ needs.deploy-admin-frontend.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Storefront:** ${{ needs.config.outputs.siteUrl }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Admin:** ${{ needs.config.outputs.adminUrl }}" >> $GITHUB_STEP_SUMMARY
